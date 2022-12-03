@@ -158,6 +158,3 @@ f(20)*a4*1000
 ```
 
 
-## Realiza el problema de "Un problemilla más" sobre las ventas trimestraless de libros de texto universitarios.
-
-
