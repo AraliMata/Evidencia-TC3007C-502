@@ -1,0 +1,163 @@
+---
+title: "A8-Series de tiempo no estacionarias. Tendencia"
+author: "Angel Corrales Sotelo A01562052, Yoceline Aralí Mata Ledezma A01562116"
+date: "2022-11-17"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+ventas = c(4.8, 4.1, 6, 6.5, 5.8, 5.2, 6.8, 7.4, 6, 5.6, 7.5, 7.8, 6.3, 5.9, 8, 8.4)
+
+```
+
+## Realiza el gráfico de dispersión. Observa la tendencia y los ciclos.
+
+```{r}
+plot(ventas, col = "blue", type = "b", xlab="Trimestre")
+```
+
+
+## Realiza el análisis de tendencia y estacionalidad
+
+```{r}
+x = ts(ventas, frequency = 4, start(c(2016,1)))
+plot.ts(x, col = "red", type="b", xlab = "Año", ylab= "Ventas")
+```
+
+
+### Descompón la serie en sus 3 componentes e interprétalos
+```{r}
+T = decompose(x, type = "m")
+plot(T, col ="blue", xlab = "Año")
+```
+
+Se observa una tendencia así como algo de estacionalidad.
+
+## Analiza el modelo lineal de la tendencia:
+
+```{r}
+T$seasonal
+```
+
+### Realiza la regresión lineal de la tendencia (ventas desestacionalizadas vs tiempo)
+```{r}
+ventas_desestacionalizadas = (T$x)/(T$seasonal)
+x3 = 1:16
+y3 = ventas_desestacionalizadas
+N3 = lm(y3~x3)
+N3
+```
+### Dibuja la recta junto con las ventas desestacionalizadas.
+```{r}
+plot(x3, y3, type = "l")
+abline(N3, col = "red")
+text(6, 7, " ventas = 5.1080 + 0.1474 trimestre")
+```
+
+#### Analiza la pertinencia del modelo lineal:
+
+```{r}
+f = function(x) {5.1080 + 0.1474*x}
+# Los ídices estacionales son:
+a1 = T$seasonal[1]
+a2 =T$seasonal[2]
+a3 = T$seasonal[3]
+a4 = T$seasonal[4];
+prediccionesEnMiles = c(f(1)*a1*1000,
+f(2)*a2*1000,
+f(3)*a3*1000,
+f(4)*a4*1000,
+f(5)*a1*1000,
+f(6)*a2*1000,
+f(7)*a3*1000,
+f(8)*a4*1000,
+f(9)*a1*1000,
+f(10)*a2*1000,
+f(11)*a3*1000,
+f(12)*a4*1000,
+f(13)*a1*1000,
+f(14)*a2*1000,
+f(15)*a3*1000,
+f(16)*a4*1000)
+predicciones = prediccionesEnMiles/1000
+```
+
+```{r}
+summary(N3)
+```
+
+##### Significancia de B1
+
+Ya que p es menor a 0.05, beta1 es significativo.
+
+##### Variabilidad explicada por el modelo (c.d)
+
+El coeficiente de determinación es de 0.9208 lo cual indica que hay una alta variabilidad explicada por el modelo.
+
+##### Análisis de los residuos
+
+* Normalidad
+```{r}
+residuals = N3$residuals
+shapiro.test(residuals)
+qqnorm(residuals)
+qqline(residuals,col="blue")
+
+hist(residuals,freq=FALSE)
+lines(density(residuals),col="red")
+curve(dnorm(x,mean=mean(residuals),sd=sd(residuals)), from=-20,to=20,add=TRUE, col="blue",lwd=2)
+```
+Al observar la qqplot se puede decir que los datos son normales ya que se ajustan casi idealmente a la línea. También al hacer la prueba de normalidad Shapiro-Wilk se obtiene que el valor p es mayor a 0.05, lo cual indica normalidad. 
+
+* Media cero
+```{r}
+t.test(residuals)
+```
+Debido a que el valor p es mayor a 0.05, se puede concluir que la media es igual a 0.
+
+* Homocedasticidad
+```{r}
+plot(N3$fitted.values,residuals)
+abline(h=0, col="blue")
+```
+
+No se observa homocedasticidad lo cual podría indicar que hay dependencia entre los residuos.
+
+## Calcula el CME y el EPAM (promedio de los errores porcentuales) de la predicción de la serie de tiempo.
+
+```{r}
+CME2=mean((ventas-predicciones)^2,na.rm="TRUE")
+CME2
+
+epam = mean(abs(ventas-predicciones) / ventas)
+epam
+```
+
+## Dibuja el gráfico de los valores de las ventas y las predicciones vs el tiempo
+```{r}
+t = 1:16
+plot(t,ventas, type = "b", col = "blue")
+lines(t,predicciones, type="o")
+```
+## Concluye sobre el modelo
+Ya que el modelo pasó casi todas las pruebas de residuos y además la predicción de ventas se ajusta casi idealmente a las ventas reales se concluye que el modelo es una buena herramienta para realizar el pronóstico de ventas en este caso.
+
+
+## Realiza el pronóstico para el siguiente año.
+
+```{r}
+f(17)*a1*1000
+f(18)*a2*1000
+f(19)*a3*1000
+f(20)*a4*1000
+```
+
+
+## Realiza el problema de "Un problemilla más" sobre las ventas trimestraless de libros de texto universitarios.
+
+
